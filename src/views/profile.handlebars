@@ -1,6 +1,4 @@
 
-
-<h1>Ingresaste!</h1>
 <h1>Mi Perfil</h1>
 
 
@@ -8,11 +6,11 @@
 
     <div class="form-container">
         <div class="profile-info">
-            <p><strong>Nombre:</strong> {{user.first_name}}</p>
-            <p><strong>Apellido:</strong> {{user.last_name}}</p>
-            <p><strong>Email:</strong> {{user.email}}</p>
-            <p><strong>Edad:</strong> {{user.age}}</p>
-            <p><strong>Cart ID:</strong> <a href="/api/carts/{{user.cart}}">{{user.cart}}</a></p>
+            <p><strong>Nombre:</strong> {{this.user.first_name}}</p>
+            <p><strong>Apellido:</strong> {{this.user.last_name}}</p>
+            <p><strong>Email:</strong> {{this.user.email}}</p>
+            <p><strong>Edad:</strong> {{this.user.age}}</p>
+            <p><strong>Cart ID:</strong> <a href="/api/carts/{{this.user.cart}}">{{this.user.cart}}</a></p>
         </div>
          <form action="/api/users/logout" method="POST">
     <button class="btn btn-success"type="submit">Logout</button>
@@ -24,7 +22,4 @@
     <a class="button" href="/products">Tienda</a>
   {{/if}}
     </div>
-
-
-
 </div>

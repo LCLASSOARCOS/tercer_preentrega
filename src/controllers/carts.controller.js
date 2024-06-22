@@ -148,7 +148,7 @@ class CartsController {
         try {
             const respuesta = await cs.emptyCart(req.params.cid);
             if (respuesta.status) {
-                res.status(200).send(respuesta);
+                res.redirect(`/carts/${req.params.cid}`);
             } else {
                 res.status(400).send(respuesta);
             }

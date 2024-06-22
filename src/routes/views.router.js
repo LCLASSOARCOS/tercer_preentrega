@@ -16,6 +16,10 @@ const vc = new ViewsController();
 
 router.get("/", vc.renderHome);
 router.get("/products", authMiddleware, ensureCart, vc.renderProducts);
+router.get("/carts", authMiddleware, ensureCart, (req, res) => {
+    const cartId = req.session.user.cart;
+    res.redirect(`/carts/${cartId}`);
+});
 router.get("/carts/:cid", authMiddleware, ensureCart, vc.renderCart);
 router.get("/login", vc.renderLogin);
 router.get("/register", vc.renderRegister);
