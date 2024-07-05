@@ -1,4 +1,4 @@
-//app.js
+// app.js
 import express from 'express';
 import session from 'express-session';
 import exphbs from 'express-handlebars';
@@ -9,7 +9,6 @@ import cartsRouter from './routes/carts.router.js';
 import productsRouter from './routes/products.router.js';
 import viewsRouter from './routes/views.router.js';
 import userRouter from './routes/user.router.js';
-//import sessionRouter from './routes/session.router.js';
 import passport from 'passport';
 import initializePassport from './config/passport.config.js';
 import mongoose from 'mongoose';
@@ -18,30 +17,27 @@ import cors from 'cors';
 import authMiddleware from './middleware/authmiddleware.js';
 import UsersModel from './models/users.model.js';
 import MessageModel from './models/mesagge.model.js';
-import MongoStore from "connect-mongo";
-const app = express();
-const { mongo_url, puerto } = configObject;
+import MongoStore from 'connect-mongo';
 import cookieParser from 'cookie-parser';
-import compression from "express-compression"; 
+import compression from 'compression'; // Importación correcta del módulo de compresión
 import { errorHandler } from './middleware/errorHandler.js';
 
-
-
-
+const app = express();
+const { mongo_url, puerto } = configObject;
 
 // Middleware
-
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('./src/public'));
 app.use(cors());
-//GZIP: 
+app.use(cookieParser());
+// GZIP
 app.use(compression());
+
 // Configuración de express-session
 app.use(session({
     store: MongoStore.create({ mongoUrl: mongo_url, ttl: 86400 }),
-    secret: "secretCoder",
+    secret: 'secretCoder',
     resave: true,
     saveUninitialized: true,
 }));
@@ -49,23 +45,21 @@ app.use(session({
 // Manejo de errores
 app.use(errorHandler);
 
-  // Passport
-  app.use(passport.initialize());
-  app.use(passport.session());
-  initializePassport();
-  
+// Passport
+app.use(passport.initialize());
+app.use(passport.session());
+initializePassport();
+
 // Handlebars
 app.engine('handlebars', exphbs.engine());
 app.set('view engine', 'handlebars');
 app.set('views', './src/views');
 
 // Rutas
-app.use("/api/products", productsRouter);
-app.use("/api/carts", cartsRouter);
-app.use("/api/users", userRouter);
-app.use("/", viewsRouter);
-
-
+app.use('/api/products', productsRouter);
+app.use('/api/carts', cartsRouter);
+app.use('/api/users', userRouter);
+app.use('/', viewsRouter);
 
 app.get('/pruebas', async (req, res) => {
     try {
@@ -113,10 +107,3 @@ io.on('connection', (socket) => {
         }
     });
 });
-
-
-//websocket
-///Websockets: 
-
-//import SocketManager from './sockets/socketmanager.js';
-//new SocketManager(httpServer);
