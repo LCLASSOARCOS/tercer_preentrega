@@ -22,6 +22,9 @@ import MongoStore from "connect-mongo";
 const app = express();
 const { mongo_url, puerto } = configObject;
 import cookieParser from 'cookie-parser';
+import compression from "express-compression"; 
+import { errorHandler } from './middleware/errorHandler.js';
+
 
 
 
@@ -33,7 +36,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('./src/public'));
 app.use(cors());
-
+//GZIP: 
+app.use(compression());
 // Configuración de express-session
 app.use(session({
     store: MongoStore.create({ mongoUrl: mongo_url, ttl: 86400 }),
@@ -41,6 +45,9 @@ app.use(session({
     resave: true,
     saveUninitialized: true,
 }));
+
+// Manejo de errores
+app.use(errorHandler);
 
   // Passport
   app.use(passport.initialize());
@@ -57,6 +64,7 @@ app.use("/api/products", productsRouter);
 app.use("/api/carts", cartsRouter);
 app.use("/api/users", userRouter);
 app.use("/", viewsRouter);
+
 
 
 app.get('/pruebas', async (req, res) => {

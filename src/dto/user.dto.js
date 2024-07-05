@@ -1,11 +1,12 @@
+//user.dto.js
 class UserDTO {
-    constructor(first_name, last_name, role, email, age, cart) {
-        this.first_name = first_name;
-        this.last_name = last_name;
-        this.role = role;
-        this.email = email;
-        this.age = age;
-        this.cart = cart;
+    constructor(user) {
+        this.first_name = user.first_name;
+        this.last_name = user.last_name;
+        this.role = user.role;
+        this.email = user.email;
+        this.age = user.age;
+        this.cart = user.cart;
     }
 }
 

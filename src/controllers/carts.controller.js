@@ -1,5 +1,7 @@
 import CartsService from "../service/carts.service.js";
 import mongoose from "mongoose";
+import TicketService from "../service/ticket.service.js";
+import { createError, ERROR_TYPES } from '../utils/errorDirectory.js';
 
 const cs = new CartsService();
 
@@ -14,8 +16,7 @@ class CartsController {
                 res.status(400).send(respuesta);
             }
         } catch (error) {
-            res.status(500).send("Error interno del servidor: " + error.message);
-        }
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));        }
     }
 
     // 2. Borrar carrito
@@ -28,8 +29,7 @@ class CartsController {
                 res.status(400).send(respuesta);
             }
         } catch (error) {
-            res.status(500).send("Error interno del servidor: " + error.message);
-        }
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));        }
     }
 
     // 3. Agregar productos al carrito
@@ -43,11 +43,11 @@ class CartsController {
                 const carritoID = (req.user.cart).toString();
                 res.redirect(`/carts/${carritoID}`);
             } else {
-                res.status(400).send(respuesta);
+                next(createError(ERROR_TYPES.PRODUCT_OUT_OF_STOCK, "Producto fuera de stock"));
+
             }
         } catch (error) {
-            res.status(500).send("Error interno del servidor: " + error.message);
-        }
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));        }
     }
 
     // 4. Mostrar carritos
@@ -60,8 +60,7 @@ class CartsController {
                 res.status(400).send(respuesta);
             }
         } catch (error) {
-            res.status(500).send("Error interno del servidor: " + error.message);
-        }
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));        }
     }
 
     // 5. Mostrar carrito según ID
@@ -74,31 +73,17 @@ class CartsController {
       
       
           if (!carrito || !Array.isArray(carrito.products) || carrito.products.length === 0) { // Verificar si tiene productos
-            return res.status(404).json({ error: "Carrito no encontrado o sin productos" }); // Manejar el error
-          }
+            next(createError(ERROR_TYPES.CART_EMPTY, "Carrito no encontrado o sin productos"));
+        }
           const productosEnCarrito = carrito.products.map(item => ({
             product: item.product.toObject(), // Verificar que `product` es un documento completo
             quantity: item.quantity
           }));
            res.render("carts", { productos: productosEnCarrito });
         } catch (error) {
-           console.error("Error al obtener el carrito", error);
-           res.status(500).json({ error: "Error interno del servidor" });
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));
         }
 
-
-
-        /*
-        try {
-            const respuesta = await cs.getCartById(req.params.cid);
-            if (respuesta.status) {
-                res.status(200).send(respuesta);
-            } else {
-                res.status(400).send(respuesta);
-            }
-        } catch (error) {
-            res.status(500).send("Error interno del servidor: " + error.message);
-        }*/
     }
 
     // 6. Borrar un producto del carrito
@@ -108,11 +93,11 @@ class CartsController {
             if (respuesta.status) {
                 res.status(200).send(respuesta);
             } else {
-                res.status(400).send(respuesta);
+                next(createError(ERROR_TYPES.PRODUCT_NOT_FOUND, "Producto no encontrado en el carrito"));
+
             }
         } catch (error) {
-            res.status(500).send("Error interno del servidor: " + error.message);
-        }
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));        }
     }
 
     // 7. Actualizar productos del carrito
@@ -125,8 +110,7 @@ class CartsController {
                 res.status(400).send(respuesta);
             }
         } catch (error) {
-            res.status(500).send("Error interno del servidor: " + error.message);
-        }
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));        }
     }
 
     // 8. Actualizar la cantidad de productos de un carrito
@@ -139,8 +123,7 @@ class CartsController {
                 res.status(400).send(respuesta);
             }
         } catch (error) {
-            res.status(500).send("Error interno del servidor: " + error.message);
-        }
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));        }
     }
 
     // 9. Vaciar carrito
@@ -153,9 +136,55 @@ class CartsController {
                 res.status(400).send(respuesta);
             }
         } catch (error) {
-            res.status(500).send("Error interno del servidor: " + error.message);
-        }
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));        }
     }
+    //10.terminar compra
+    async purchase(req, res) {
+        const cartId = req.params.cid;
+        try {
+            const cart = await CartsService.getCartById(cartId);
+            if (!cart) {
+                return next(createError(ERROR_TYPES.CART_NOT_FOUND, "Carrito no encontrado"));
+            }
+
+            // Lógica para verificar disponibilidad y calcular el monto total
+            let amount = 0;
+            const unavailableProducts = [];
+
+            cart.products.forEach(item => {
+                if (item.product.stock >= item.quantity) {
+                    amount += item.product.price * item.quantity;
+                } else {
+                    unavailableProducts.push(item.product._id);
+                }
+            });
+
+            if (unavailableProducts.length === 0) {
+                const ticketData = {
+                    amount,
+                    purchaser: req.user.email
+                };
+
+                await TicketService.createTicket(ticketData);
+                await CartsService.emptyCart(cartId);
+                res.status(200).send('Compra realizada con éxito');
+            } else {
+                res.status(400).json({
+                    error: 'Algunos productos no están disponibles',
+                    unavailableProducts
+                });
+            }
+        } catch (error) {
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));        }
+    }
+    async finalizarCompra  (req, res) {
+        const { cartId } = req.params;
+        try {
+            const resultado = await procesarCompra(cartId);
+            res.status(200).json({ mensaje: 'Compra realizada con éxito', data: resultado });
+        } catch (error) {
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));        }
+    };
 }
 
 export default CartsController;

@@ -1,3 +1,4 @@
+//passport.config.js
 import passport from "passport";
 import local from "passport-local";
 import UsersModel from "../models/users.model.js";

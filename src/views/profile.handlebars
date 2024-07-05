@@ -10,7 +10,6 @@
             <p><strong>Apellido:</strong> {{this.user.last_name}}</p>
             <p><strong>Email:</strong> {{this.user.email}}</p>
             <p><strong>Edad:</strong> {{this.user.age}}</p>
-            <p><strong>Cart ID:</strong> <a href="/api/carts/{{this.user.cart}}">{{this.user.cart}}</a></p>
         </div>
          <form action="/api/users/logout" method="POST">
     <button class="btn btn-success"type="submit">Logout</button>
@@ -18,6 +17,7 @@
     {{#if this.isAdmin}}
     <a class="button" href="/realtimeproducts">Modificar Productos</a>
   {{else}}
+  <p><strong>Cart ID:</strong> <a href="/api/carts/{{user.cart}}">{{user.cart}}</a></p>
     <a class="button" href="/chat">Chat en vivo</a>
     <a class="button" href="/products">Tienda</a>
   {{/if}}

@@ -5,6 +5,8 @@ import UserController from "../controllers/user.controller.js";
 import authMiddleware from "../middleware/authmiddleware.js";
 const uc = new UserController();
 import checkUserRole from "../middleware/checkrole.js";
+import userRepository from "../repositories/user.repository.js";
+
 const router = express.Router();
 // Rutas para registrar y loguear usuarios
 router.post("/register", passport.authenticate("register", { failureRedirect: "/failedregister" }), uc.register);
@@ -27,5 +29,14 @@ router.get("/githubcallback", passport.authenticate("github", { failureRedirect:
     req.session.user = req.user;
     req.session.login = true;
     res.redirect("/profile");
+});
+
+router.get('/current', authMiddleware, async (req, res) => {
+    try {
+        const userDTO = await userRepository.getById(req.user._id);
+        res.json(userDTO);
+    } catch (error) {
+        res.status(500).send('Error interno del servidor');
+    }
 });
 export default router;

@@ -4,10 +4,14 @@ import CartsController from "../controllers/carts.controller.js";
 import CartsRepository from "../repositories/carts.repository.js";
 import ProductsModel from "../models/products.model.js";
 import UserDTO from "../dto/user.dto.js";
+import nodemailer from "nodemailer";
+import CartsService from "../service/carts.service.js";
+import MockingService from '../service/mocking.service.js';
 const ps = new ProductsService();
 const cc = new CartsController();
 const cr = new CartsRepository();
 const pm = new ProductsModel();
+const cs = new CartsService();
 
 class ViewsController {
     async renderProducts(req, res) {
@@ -43,11 +47,7 @@ class ViewsController {
                 cartId,
             });
         } catch (error) {
-            console.error("Error al obtener productos (view):", error.message);
-            res.status(500).json({
-                status: "error",
-                error: "Error interno del servidor",
-            });
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));
         }
     }
     async renderProfile(req, res) {
@@ -93,8 +93,7 @@ class ViewsController {
     
             res.render("carts", { productos: productosEnCarrito, totalCompra, cartId });
         } catch (error) {
-            console.error("Error al obtener el carrito", error);
-            res.status(500).json({ error: "Error interno del servidor" });
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));
         }
     }
 
@@ -110,8 +109,7 @@ class ViewsController {
         try {
             res.render("realtimeproducts");
         } catch (error) {
-            console.log("error en la vista real time", error);
-            res.status(500).json({ error: "Error interno del servidor" });
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));
         }
     }
 
@@ -132,8 +130,45 @@ class ViewsController {
                 res.json({ status: 'failure' });
             }
         } catch (error) {
-            res.status(500).json({ status: 'error', message: error.message });
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));
         }
+    }
+
+    async compraExitosa(req, res) {
+        const userEmail = req.user.email; // Obtener el correo del usuario autenticado
+        const transport = nodemailer.createTransport({
+            service: "gmail",
+            port: 587,
+            auth: {
+                user: "ayelen.anca@gmail.com",
+                pass: "bsqc hogc sjpa ydxg"
+            },
+            tls: {
+                rejectUnauthorized: false
+            }
+        });
+        try {
+            await transport.sendMail({
+                from: "Compra exitosa <ayelen.anca@gmail.com>",
+                to: userEmail, // Usar el correo del usuario autenticado
+                subject: "Compra exitosa",
+                html: `<h1>Arrabal MusicStore: </h1> <p>Su compra fue exitosa!</p>
+                <img src="cid:tsuki" />`,
+                // Para enviar una imagen como adjunto:
+                attachments: [{
+                    filename: "conejito_mate.jpeg",
+                    path: "./src/public/img/conejito_mate.jpeg",
+                    cid: "tsuki"
+                }]
+            });
+            res.render("mail");
+        } catch (error) {
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));
+        }
+    }
+    async renderMockingProducts(req, res) {
+        const products = MockingService.generateMockProducts();
+        res.json(products);
     }
 }
 

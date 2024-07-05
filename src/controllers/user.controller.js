@@ -29,8 +29,7 @@ class UserController {
 
             res.redirect("/login");
         } catch (error) {
-            console.error(error);
-            res.status(500).send("Error interno del servidor");
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));
         }
     }
 
@@ -60,7 +59,7 @@ class UserController {
             const user = await UsersModel.create(req.body);
             res.status(201).json(user);
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));
         }
     }
 
@@ -82,8 +81,7 @@ class UserController {
                     return res.redirect('/login'); // Redirigir después de borrar la cookie y destruir la sesión
                 });
             } catch (error) {
-                console.error(error);
-                return res.status(500).json({ error: 'Logout failed' });
+                next(createError(ERROR_TYPES.SERVER_ERROR, "Error interno del servidor", { originalError: error.message }));
             }
         }
 
